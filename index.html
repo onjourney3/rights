@@ -1,0 +1,817 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>인권감수성 진단 검사 (HRS Scale)</title>
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Chart.js CDN -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    body { font-family: -apple-system, BlinkMacSystemFont, "Apple SD Gothic Neo", "Malgun Gothic", sans-serif; }
+  </style>
+</head>
+<body class="bg-slate-50 text-slate-800 antialiased min-h-screen">
+
+  <!-- Header -->
+  <header class="bg-white border-b border-slate-200 sticky top-0 z-30 shadow-sm">
+    <div class="max-w-3xl mx-auto px-4 py-3 flex items-center justify-between">
+      <div class="flex items-center space-x-2">
+        <span class="bg-indigo-600 text-white text-xs font-bold px-2 py-1 rounded">HRS</span>
+        <h1 class="font-bold text-base md:text-lg text-slate-900">인권감수성 진단 검사</h1>
+      </div>
+      <div id="progressText" class="text-xs font-medium text-slate-500">진행률 0%</div>
+    </div>
+    <!-- Progress Bar -->
+    <div class="w-full bg-slate-100 h-1.5">
+      <div id="progressBar" class="bg-indigo-600 h-1.5 transition-all duration-300" style="width: 0%;"></div>
+    </div>
+  </header>
+
+  <!-- Main Container -->
+  <main class="max-w-3xl mx-auto px-4 py-6">
+
+    <!-- Screen 1: Start / User Info -->
+    <section id="screenIntro" class="bg-white rounded-2xl shadow-sm border border-slate-200 p-6 md:p-8 space-y-6">
+      <div>
+        <h2 class="text-2xl font-bold text-slate-900 mb-2">사회문제 판단 검사 안내</h2>
+        <p class="text-slate-600 text-sm leading-relaxed">
+          본 검사는 국가인권위원회 『인권감수성 지표 개발 연구』(문용린 외)를 기반으로 제작된 표준화 진단 도구입니다. 
+          일상과 사회 속 10가지 딜레마 상황을 읽고, 각각의 주장과 결과에 대해 본인이 느끼는 중요도를 평정해 주시기 바랍니다.
+        </p>
+      </div>
+
+      <div class="bg-slate-50 rounded-xl p-4 border border-slate-100 space-y-2 text-xs text-slate-500">
+        <p class="font-semibold text-slate-700">📌 검사 유의사항</p>
+        <ul class="list-disc list-inside space-y-1">
+          <li>정답이나 오답이 정해져 있지 않으므로 솔직하게 답변해 주세요.</li>
+          <li>총 10개 에피소드, 각 3문항(상황지각, 결과지각, 책임지각)으로 구성되어 있습니다.</li>
+          <li>소요 시간은 약 15~20분 내외입니다.</li>
+        </ul>
+      </div>
+
+      <!-- User Demographics Form -->
+      <div class="space-y-4 pt-2">
+        <h3 class="font-bold text-slate-900 text-sm">기본 정보 입력 (선택)</h3>
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div>
+            <label class="block text-xs font-medium text-slate-600 mb-1">성별</label>
+            <select id="userGender" class="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-indigo-500 bg-white">
+              <option value="none">선택 안 함</option>
+              <option value="male">남성</option>
+              <option value="female">여성</option>
+            </select>
+          </div>
+          <div>
+            <label class="block text-xs font-medium text-slate-600 mb-1">연령대</label>
+            <select id="userAge" class="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-indigo-500 bg-white">
+              <option value="none">선택 안 함</option>
+              <option value="20">20대</option>
+              <option value="30">30대</option>
+              <option value="40">40대</option>
+              <option value="50">50대</option>
+              <option value="60">60대 이상</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <button id="btnStart" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3.5 px-4 rounded-xl shadow transition duration-200 flex items-center justify-center space-x-2">
+        <span>검사 시작하기</span>
+        <span>→</span>
+      </button>
+    </section>
+
+    <!-- Screen 2: Test Form (Card Pager) -->
+    <section id="screenTest" class="hidden space-y-6">
+      
+      <!-- Episode Card -->
+      <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-6 md:p-8 space-y-6">
+        <!-- Episode Title & Topic Badge -->
+        <div class="flex items-center justify-between border-b border-slate-100 pb-4">
+          <div>
+            <span id="epNumber" class="text-xs font-bold text-indigo-600 tracking-wider uppercase">에피소드 1 / 10</span>
+            <h2 id="epTitle" class="text-xl font-bold text-slate-900 mt-1">가족회의</h2>
+          </div>
+          <span id="epTopic" class="bg-indigo-50 text-indigo-700 text-xs font-semibold px-2.5 py-1 rounded-full">노인의 권리</span>
+        </div>
+
+        <!-- Story Content -->
+        <div class="bg-slate-50 p-4 md:p-5 rounded-xl border border-slate-100 text-slate-700 text-sm leading-relaxed" id="epStory">
+          <!-- Story dynamically inserted -->
+        </div>
+
+        <!-- Questions Section -->
+        <div class="space-y-8" id="epQuestions">
+          <!-- Dynamic Question Pairs -->
+        </div>
+      </div>
+
+      <!-- Navigation Buttons -->
+      <div class="flex items-center justify-between space-x-4">
+        <button id="btnPrev" class="px-5 py-3 bg-white border border-slate-300 text-slate-700 hover:bg-slate-50 font-medium rounded-xl text-sm transition">
+          이전 에피소드
+        </button>
+        <button id="btnNext" class="px-6 py-3 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-xl text-sm transition shadow">
+          다음 에피소드
+        </button>
+      </div>
+    </section>
+
+    <!-- Screen 3: Results -->
+    <section id="screenResult" class="hidden space-y-6">
+      <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-6 md:p-8 space-y-8">
+        
+        <!-- Score Summary Header -->
+        <div class="text-center space-y-2 border-b border-slate-100 pb-6">
+          <span class="inline-block bg-emerald-50 text-emerald-700 text-xs font-bold px-3 py-1 rounded-full">검사 완료</span>
+          <h2 class="text-2xl font-bold text-slate-900">검사 종합 분석 결과</h2>
+          <p class="text-slate-500 text-xs">국가인권위원회 표준 채점 알고리즘 적용</p>
+        </div>
+
+        <!-- Total Score Gauge Box -->
+        <div class="bg-indigo-50/50 rounded-2xl p-6 text-center border border-indigo-100 space-y-2">
+          <p class="text-xs font-semibold text-indigo-600">인권감수성 종합 원점수</p>
+          <div class="text-5xl font-black text-indigo-900" id="resTotalScore">0 <span class="text-lg font-normal text-slate-500">/ 150</span></div>
+          <p id="resInterpretation" class="text-sm font-medium text-indigo-800 pt-2"></p>
+        </div>
+
+        <!-- 3 Sub-Factor Breakdown -->
+        <div class="space-y-4">
+          <h3 class="font-bold text-slate-900 text-base">하위 요인별 점수 프로파일</h3>
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <!-- 상황지각 -->
+            <div class="bg-slate-50 p-4 rounded-xl border border-slate-100 text-center">
+              <span class="text-xs text-slate-500 block mb-1">상황 지각 능력</span>
+              <span class="text-2xl font-bold text-slate-800" id="resSitScore">0</span>
+              <span class="text-xs text-slate-400">/ 50점</span>
+              <p class="text-[11px] text-slate-500 mt-2">인권 침해 또는 갈등 이슈를 올바르게 인지하는 능력</p>
+            </div>
+            <!-- 결과지각 -->
+            <div class="bg-slate-50 p-4 rounded-xl border border-slate-100 text-center">
+              <span class="text-xs text-slate-500 block mb-1">결과 지각 능력</span>
+              <span class="text-2xl font-bold text-slate-800" id="resConScore">0</span>
+              <span class="text-xs text-slate-400">/ 50점</span>
+              <p class="text-[11px] text-slate-500 mt-2">사건이 당사자의 복지 및 정서에 미칠 영향을 공감·예측하는 능력</p>
+            </div>
+            <!-- 책임지각 -->
+            <div class="bg-slate-50 p-4 rounded-xl border border-slate-100 text-center">
+              <span class="text-xs text-slate-500 block mb-1">책임 지각 능력</span>
+              <span class="text-2xl font-bold text-slate-800" id="resRespScore">0</span>
+              <span class="text-xs text-slate-400">/ 50점</span>
+              <p class="text-[11px] text-slate-500 mt-2">문제 해결 책임을 주체적으로 느끼고 실천하려는 의지</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Radar Chart -->
+        <div class="space-y-2">
+          <h3 class="font-bold text-slate-900 text-base">인권감수성 하위 차원 레이더</h3>
+          <div class="w-full max-w-sm mx-auto p-2">
+            <canvas id="radarChart"></canvas>
+          </div>
+        </div>
+
+        <!-- Details by Episode -->
+        <div class="space-y-4">
+          <h3 class="font-bold text-slate-900 text-base">에피소드(인권 항목)별 획득 점수</h3>
+          <div class="overflow-x-auto">
+            <table class="w-full text-left text-xs border border-slate-200 rounded-lg overflow-hidden">
+              <thead class="bg-slate-100 text-slate-700 font-semibold border-b border-slate-200">
+                <tr>
+                  <th class="p-3">에피소드</th>
+                  <th class="p-3">관련 인권 항목</th>
+                  <th class="p-3 text-center">상황</th>
+                  <th class="p-3 text-center">결과</th>
+                  <th class="p-3 text-center">책임</th>
+                  <th class="p-3 text-right">소계</th>
+                </tr>
+              </thead>
+              <tbody id="resTableBody" class="divide-y divide-slate-100">
+                <!-- Dynamic Rows -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- Restart Button -->
+        <button id="btnRestart" class="w-full py-3.5 bg-slate-900 hover:bg-slate-800 text-white font-bold rounded-xl text-sm transition">
+          검사 다시 하기
+        </button>
+
+      </div>
+    </section>
+
+  </main>
+
+  <!-- Application Logic & Dataset -->
+  <script>
+    // 10 Episodes Data (Paper Appendix 8)
+    const episodes = [
+      {
+        id: 0,
+        title: "가족회의",
+        topic: "노인의 행복추구권/결혼할 권리",
+        story: "정OO 할머니는 올해 연세가 65세로 10년 전에 남편을 여의고 줄곧 아들 내외와 함께 살아왔다. 아들 내외는 효자로 소문날 만큼 어머니를 극진히 모셔왔다. 그런데 최근 들어 할머니는 여생을 함께 보낼 동반자가 필요하다는 생각을 하게 되었고, 마침 노인복지회관에서 만나 마음을 터놓고 지내는 할아버지로부터 얼마 전에 청혼을 받은 상태이다. 그래서 어느 날 자식들에게 좋은 사람이 있어서 재혼을 하겠다는 언질을 주었다. 그 이야기를 듣고 당황한 자식들은 가족회의를 열었는데 여러 가지 분분한 의견들을 내놓았다.",
+        questions: [
+          {
+            type: "sit",
+            label: "Ⅰ. [상황 지각]",
+            prompt: "위 사건과 관련하여 다음과 같은 주장이 있을 수 있습니다. 각각의 주장이 어느 정도 중요하다고 생각하십니까?",
+            nonHr: "할머니는 가족들의 의사를 고려해야 한다.",
+            hr: "할머니가 원하시는 대로 하면 된다."
+          },
+          {
+            type: "con",
+            label: "Ⅱ. [결과 지각]",
+            prompt: "할머니가 재혼할 경우 다음과 같은 결과가 예상됩니다. 각각의 결과가 어느 정도 중요하다고 생각하십니까?",
+            nonHr: "가족들에게 여러가지 부담을 줄 수 있다.",
+            hr: "할머니가 의미있는 여생을 보낼 것이다."
+          },
+          {
+            type: "resp",
+            label: "Ⅲ. [책임 지각]",
+            prompt: "만약 당신이 이 할머니의 자식이라면 어떻게 하시겠습니까?",
+            nonHr: "가족들의 결정사항에 따르시도록 한다.",
+            hr: "할머니가 원하시는 대로 해드린다."
+          }
+        ]
+      },
+      {
+        id: 1,
+        title: "김씨의 구속",
+        topic: "체포·구금당하지 않을 권리",
+        story: "밤늦게 귀가하던 한 남자가 괴한에게 심한 폭행을 당하는 일이 발생했다. 범인은 얼굴에 복면을 한데다가 뚜렷한 증거도 남아있지 않아, 수사를 하고 있던 경찰은 고민에 빠졌다. 그런데 한 목격자라는 사람이 나타나, 범인으로부터 보복당할까봐 신고를 못했는데 자신이 목격한 범인이 같은 동네에 사는 김씨와 체격과 용모가 비슷한 것 같다는 제보를 하였다. 이에 경찰은 김씨가 도망가기 전에 붙잡아 놓는 것이 중요하다고 판단하여 바로 체포하여 구속하였다. 그러나 경찰조사 결과 김씨가 범인이라는 확실한 증거는 없었으며, 따라서 구속되었던 김씨는 증거불충분으로 풀려났다.",
+        questions: [
+          {
+            type: "sit",
+            label: "Ⅰ. [상황 지각]",
+            prompt: "위 사건과 관련하여 각각의 주장이 어느 정도 중요하다고 생각하십니까?",
+            nonHr: "일단 목격자의 말을 믿고 김씨가 도망가기 전에 체포하여 구속해두는 것이 우선이다.",
+            hr: "확실한 증거 없이 범인으로 지목하여 체포, 구속하는 것은 옳지 않다."
+          },
+          {
+            type: "con",
+            label: "Ⅱ. [결과 지각]",
+            prompt: "위 사건과 관련하여 각각의 결과가 어느 정도 중요하다고 생각하십니까?",
+            nonHr: "범인일지도 모르는 김씨를 놓치지 않고 신속히 조사할 수 있다.",
+            hr: "확실한 증거없이 체포, 구속함으로써 김씨를 억울하게 할 수도 있다."
+          },
+          {
+            type: "resp",
+            label: "Ⅲ. [책임 지각]",
+            prompt: "만약 당신이 경찰이라면 어떻게 하시겠습니까?",
+            nonHr: "범인일지도 모르는 사람을 놓치기 전에 일단 체포하여 구속한다.",
+            hr: "좀 더 정황을 알아보고 확실한 증거가 있을 때 구속한다."
+          }
+        ]
+      },
+      {
+        id: 2,
+        title: "장애인 학교",
+        topic: "장애인의 교육받을 권리",
+        story: "최근에 부녀회장인 소지원씨에게는 고민이 생겼다. 아파트 근처에 있는 학교부지를 교육청에서 자폐아 학교로 인가해 주었기 때문이다. 장애인 학교가 들어서면 일반 학부모들이 이 동네로 이사오기를 꺼려하여 땅값과 집값이 크게 떨어지게 된다. 그렇게 되면 여기에 살던 사람들이 다른 지역으로 이사갈 때에 큰 경제적 손실을 입게 된다. 아파트 주민들은 그냥 구경만 해서는 안된다고 생각하여, 교육청에 진정서를 내자는 의견에 과반수 이상이 동의했다. 어떤 주민은 당장 시위를 하러 나가자고 제안하기도 했다.",
+        questions: [
+          {
+            type: "sit",
+            label: "Ⅰ. [상황 지각]",
+            prompt: "이웃 주민들의 주장 중 각각의 주장이 어느 정도 중요하다고 생각하십니까?",
+            nonHr: "지역 주민들 다수의 경제적 손실을 막아야 한다.",
+            hr: "장애인들도 교육받을 수 있는 학교가 세워져야 한다."
+          },
+          {
+            type: "con",
+            label: "Ⅱ. [결과 지각]",
+            prompt: "만약 주민들의 반대로 자폐아학교의 인가가 취소된다면, 각각의 결과가 어느 정도 중요하다고 생각하십니까?",
+            nonHr: "다수의 지역 주민들은 경제적 손실을 입지 않게 된다.",
+            hr: "장애인들은 교육을 받기 위해 교외에 있는 학교까지 통학을 해야 한다."
+          },
+          {
+            type: "resp",
+            label: "Ⅲ. [책임 지각]",
+            prompt: "각각의 행동이 어느 정도 중요하다고 생각하십니까?",
+            nonHr: "주민들의 경제적 손실을 막자는 대다수의 결정에 따른다.",
+            hr: "장애인 학교를 세우는데 찬성한다."
+          }
+        ]
+      },
+      {
+        id: 3,
+        title: "려씨의 임금",
+        topic: "이주노동자의 노동권",
+        story: "조선족 노동자인 려OO씨는 한국의 공장에서 3년째 일하고 있었다. 그런데 어느 날 려씨가 다니는 공장이 부도가 나서 문을 닫게 되었다. 다행히 공장 주인이 보험에 가입해 있기 때문에 노동자들의 밀린 임금을 일부나마 지급할 수 있게 되었지만, 려씨는 외국인 노동자이기 때문에 그 대상에 해당되지 않았다. 그런데다가 대부분의 다른 노동자들은 려씨에게는 임금을 배당해주지 않아도 법적으로 전혀 문제가 없다는 분위기였다. 왜냐하면 려씨의 처지를 고려하여 려씨에게도 임금을 준다면 려씨에게 배당한 돈만큼 자신들의 몫이 줄어들 수밖에 없기 때문이다.",
+        questions: [
+          {
+            type: "sit",
+            label: "Ⅰ. [상황 지각]",
+            prompt: "위 사건과 관련하여 각각의 주장이 어느 정도 중요하다고 생각하십니까?",
+            nonHr: "외국인 노동자는 한국인 노동자와는 다른 대우를 받는 것이 당연하다.",
+            hr: "려씨가 다른 사람들과 마찬가지로 자신의 임금을 정확하게 받을 수 있도록 해야 한다."
+          },
+          {
+            type: "con",
+            label: "Ⅱ. [결과 지각]",
+            prompt: "려씨에게 임금을 배당하지 않는다면, 각각의 결과가 어느 정도 중요하다고 생각하십니까?",
+            nonHr: "다른 노동자들이 자신들의 임금을 최대한 받을 수 있을 것이다.",
+            hr: "다른 노동자들과 똑같이 일했지만 똑같은 대가를 받지 못해 억울할 것이다."
+          },
+          {
+            type: "resp",
+            label: "Ⅲ. [책임 지각]",
+            prompt: "만약 당신이 려씨와 함께 일한 노동자라면 어떻게 하시겠습니까?",
+            nonHr: "다른 사람들의 의견을 들어보고 대다수의 의견을 따르도록 한다.",
+            hr: "내가 조금 손해를 보더라도 려씨가 자신의 임금을 받을 수 있도록 한다."
+          }
+        ]
+      },
+      {
+        id: 4,
+        title: "공장 건립",
+        topic: "환경권",
+        story: "지방의 한 중소도시에서 일어난 일이다. 이 지역은 특별한 산업이 발달한 것도 아니고 관광자원이 있는 것도 아니어서, 시의 재정형편이 어렵고 지역주민들도 다른 지역에 비하여 물질적으로 풍요롭지 못하게 살아가고 있다. 그런데 최근에 한 전자회사에서 도시계획상 자연녹지로 되어 있는 지역에 전자부품을 생산하는 대규모 공장을 건립하겠다고 시에 요청을 하였다. 시장은 공장이 들어서면 막대한 고용창출을 가져올 수 있고, 결과적으로 시 전체의 사회경제적 발전에 기여하리라는 판단을 하게 되었다. 따라서 시장은 용도를 변경하여 공장건립을 허가해줄까 고민하고 있다.",
+        questions: [
+          {
+            type: "sit",
+            label: "Ⅰ. [상황 지각]",
+            prompt: "위 사건과 관련하여 각각의 주장이 어느 정도 중요하다고 생각하십니까?",
+            nonHr: "지역의 사회경제적 발전에 우선적인 관심을 두어야 한다.",
+            hr: "자연녹지를 그대로 유지해야 한다."
+          },
+          {
+            type: "con",
+            label: "Ⅱ. [결과 지각]",
+            prompt: "시장이 공장건립을 허가해줄 경우, 각각의 결과가 어느 정도 중요하다고 생각하십니까?",
+            nonHr: "지역 주민들이 재정적으로 풍요로와 질 것이다.",
+            hr: "쾌적한 환경을 잃게 될 것이다."
+          },
+          {
+            type: "resp",
+            label: "Ⅲ. [책임 지각]",
+            prompt: "당신이 시장이라면 어떻게 하시겠습니까?",
+            nonHr: "공장건립 추진활동에 적극 참가한다.",
+            hr: "환경파괴 문제를 홍보하여 공장건립을 저지한다."
+          }
+        ]
+      },
+      {
+        id: 5,
+        title: "감원 대상",
+        topic: "성차별 금지 및 평등권",
+        story: "정숙씨는 S여대에서 디자인을 전공하고 5년전 OO주식회사에 입사했다. 그녀는 자신의 전공을 살려 제품 디자인실에서 열심히 일하여 회사에 많은 기여를 했으며, 사내에서 만난 동료직원과 결혼을 했다. 어느 날 정숙씨는 회사의 경영악화로 500~600명의 사원이 일자리를 잃게 될 것이라는 소문을 듣게 되었다. 며칠 후, 상사는 정숙씨를 자리로 부른 후 현재 직원수를 줄이는 것이 불가피한 실정이라는 이야기를 한다. 그리고 가정을 혼자 책임지고 있는 남자 사원보다는 정숙씨처럼 맞벌이 가정의 여성이 일자리를 포기하는 것이 좋을 것이라며 사직을 권한다. 상사와의 면담 후 자리로 돌아온 정숙씨는 고민에 빠진다.",
+        questions: [
+          {
+            type: "sit",
+            label: "Ⅰ. [상황 지각]",
+            prompt: "감원대상자 선정에 대하여 각각의 주장이 어느 정도 중요하다고 생각하십니까?",
+            nonHr: "남성가장의 실직은 많은 가정 경제의 파탄을 가져오게 된다.",
+            hr: "여성만을 감원하는 것은 여성이 가진 일할 권리를 빼앗는 것이다."
+          },
+          {
+            type: "con",
+            label: "Ⅱ. [결과 지각]",
+            prompt: "위와 같은 감원이 실시될 때, 각각의 결과가 어느 정도 중요하다고 생각하십니까?",
+            nonHr: "남성 가장의 실직을 막아서 가정경제의 충격이 덜 심할 것이다.",
+            hr: "고정관념 때문에 여성직원이 일할 권리와 자기실현의 기회를 빼앗기게 될 것이다."
+          },
+          {
+            type: "resp",
+            label: "Ⅲ. [책임 지각]",
+            prompt: "당신이 정숙씨라면 어떻게 하시겠습니까?",
+            nonHr: "회사 경영난상 어쩔 수 없으므로 사직하고 퇴직금으로 새 일을 시작한다.",
+            hr: "노동조합에 이 사실을 알리고 불합리한 감원원칙에 항의한다."
+          }
+        ]
+      },
+      {
+        id: 6,
+        title: "국가 의료정보 센터 설립",
+        topic: "사생활 보호권",
+        story: "오늘 정부에서는 20XX년까지 국가 의료정보 센터를 설립하고 전 국민의 건강관련 정보를 수집하여 관리하도록 하겠다고 발표했습니다. 따라서 앞으로 모든 의료기관에서는 환자의 진료, 처방, 투약 기록을 의료정보 센터로 보내야만 합니다. 이렇게 수집된 의료정보는 전국의 의료기관에서 열람할 수 있도록 하여 환자가 방문하였을 때 더욱 정확한 진단과 처방을 내리는 데에 도움을 줄 것이라 기대됩니다. 또한 수집된 의료정보는 각종 질병의 원인을 연구하는 데에 활용되어 국민건강 증대와 수명연장에 기여할 것입니다.",
+        questions: [
+          {
+            type: "sit",
+            label: "Ⅰ. [상황 지각]",
+            prompt: "기사와 관련하여 각각의 주장이 어느 정도 중요하다고 생각하십니까?",
+            nonHr: "정부는 국민건강 증대를 위하여 국민의 의료정보를 수집할 필요가 있다.",
+            hr: "의료정보 유출로 야기되는 환자들의 피해를 고려해야 한다."
+          },
+          {
+            type: "con",
+            label: "Ⅱ. [결과 지각]",
+            prompt: "의료정보 센터 설립 후 예상되는 결과 중 각각 어느 정도 중요하다고 생각하십니까?",
+            nonHr: "검사나 진료에 드는 시간이 줄어들고 정확한 진단을 도울 수 있다.",
+            hr: "알리고 싶지 않은 질병이 다른 사람들에게 노출될 수 있고 그에 따라 차별을 받을 수도 있다."
+          },
+          {
+            type: "resp",
+            label: "Ⅲ. [책임 지각]",
+            prompt: "시민의 입장에서 어떤 행동을 하시겠습니까?",
+            nonHr: "국민 건강증진과 효율적인 진료를 위하여 적극 지지한다.",
+            hr: "의료정보를 공유하는 것에 의한 부작용이 우려되어 반대한다."
+          }
+        ]
+      },
+      {
+        id: 7,
+        title: "의사의 고민",
+        topic: "장애인의 신체의 자유권",
+        story: "신OO씨는 희귀한 유전병을 가지고 있는 장애인이다. 그동안 신씨를 담당해왔던 의사의 말에 따르면, 신씨가 임신할 경우 유전병이 태아에게 그대로 유전되어 동일한 병을 가진 장애아를 낳게 된다는 것이다. 그런데다가 신씨는 성에 대한 관념도 제대로 형성되어 있지 못하고 다른 사람의 공격에 대한 방어능력도 부족하여, 신씨의 부모는 늘 마음 편할 날이 없다. 그래서 신씨의 부모는 차라리 딸에게 불임수술을 시켜주는 것이 낫다고 판단하여 의사에게 수술 부탁을 하였다. 이 부탁을 받은 의사는 어떻게 해주어야 할지 고민하고 있다.",
+        questions: [
+          {
+            type: "sit",
+            label: "Ⅰ. [상황 지각]",
+            prompt: "위 사건과 관련하여 각각의 주장이 어느 정도 중요하다고 생각하십니까?",
+            nonHr: "동일한 유전병을 가진 자녀를 낳지 않도록 미리 막아야 한다.",
+            hr: "신씨 본인의 의사와는 관계없이 신체의 일부를 수술해서는 안된다."
+          },
+          {
+            type: "con",
+            label: "Ⅱ. [결과 지각]",
+            prompt: "의사가 불임수술을 해줄 경우, 각각의 결과가 어느 정도 중요하다고 생각하십니까?",
+            nonHr: "유전병을 가진 자녀를 낳는 불행한 일을 미연에 방지할 수 있다.",
+            hr: "자녀를 낳는 능력도 상실하게 된다."
+          },
+          {
+            type: "resp",
+            label: "Ⅲ. [책임 지각]",
+            prompt: "만약 당신이 의사라면 어떻게 하시겠습니까?",
+            nonHr: "자녀의 불행을 막기 위해 불임수술을 시켜준다.",
+            hr: "당사자의 동의없이 신체에 위해를 가할 수 없음을 부모에게 주지시킨다."
+          }
+        ]
+      },
+      {
+        id: 8,
+        title: "진료자 명단",
+        topic: "정신질환자의 사생활권",
+        story: "한OO씨는 시립 정신병원의 병원장이다. 얼마 전 정신질환자들의 교통사고 비율이 늘었다는 보도가 있은 후로, 한씨는 최근 2년간 정신과 진료를 10회 이상 받았던 진료자 명단을 뽑아 달라는 경찰서의 부탁을 받게 되었다. 경찰에서는 명단에 올라있는 사람들에게 수시 운전면허 적성시험을 보도록 함으로써, 잠재적으로 교통사고의 위험이 있는 사람들을 가려내어, 시민들에게 안전하게 운전할 수 있는 여건을 마련해준다는 것이다. 경찰의 부탁을 받은 한씨는 진료자 명단을 통보해주어야 할지 고민하고 있다.",
+        questions: [
+          {
+            type: "sit",
+            label: "Ⅰ. [상황 지각]",
+            prompt: "위 사건과 관련하여 각각의 주장이 어느 정도 중요하다고 생각하십니까?",
+            nonHr: "안전운전을 할 수 있는 여건을 조성하기 위해서는 사전에 예방하는 것은 필요하다.",
+            hr: "어떠한 목적을 위해서라도 개인의 진료기록을 누설해서는 안된다."
+          },
+          {
+            type: "con",
+            label: "Ⅱ. [결과 지각]",
+            prompt: "한씨가 진료자 명단을 통보해줄 경우, 각각의 결과가 어느 정도 중요하다고 생각하십니까?",
+            nonHr: "교통사고 위험인자를 가려내어 안전하게 운전할 수 있는 여건이 조성될 것이다.",
+            hr: "정신질환자들이 감추고 싶어하는 사실을 드러내게 될 것이다."
+          },
+          {
+            type: "resp",
+            label: "Ⅲ. [책임 지각]",
+            prompt: "당신이 한씨라면 어떻게 하시겠습니까?",
+            nonHr: "시민 전체의 안전을 위해서라면 진료기록을 통보해준다.",
+            hr: "공익을 위해서라도 개인의 진료기록을 통보할 수 없다고 대응한다."
+          }
+        ]
+      },
+      {
+        id: 9,
+        title: "황판사의 고민",
+        topic: "구금으로부터의 자유권",
+        story: "김씨는 지금까지의 형기합계가 5년이 넘는 절도 전과 5범으로 최근에 징역형을 마치고 석방되었다. 그런데 김씨는 동일한 죄로 5번이나 실형을 받았기 때문에 죄의 상습성이 인정되는 재범의 위험이 있는 인물이다. 김씨가 다시 사회에 나가면 언제 또 범죄를 저지를지 모른다. 국가는 범죄로부터 사회를 보호하고 범죄자를 교화할 책임이 있으므로, 김씨에게 보호감호 처분을 내릴 수도 있다. 그러면 김씨는 징역형을 마쳤지만 다시 보호감호소에 수용되어야 한다. 김씨에 대한 결정권이 있는 황OO 판사는 김씨에게 보호감호 처분을 내려야 할지 고민하고 있다.",
+        questions: [
+          {
+            type: "sit",
+            label: "Ⅰ. [상황 지각]",
+            prompt: "위 사건과 관련하여 각각의 주장이 어느 정도 중요하다고 생각하십니까?",
+            nonHr: "범죄로부터 사회를 보호하는 일이 우선시되어야 한다.",
+            hr: "범죄의 재발가능성을 이유로 구금해서는 안된다."
+          },
+          {
+            type: "con",
+            label: "Ⅱ. [결과 지각]",
+            prompt: "황판사가 보호감호 처분을 내릴 경우, 각각의 결과가 어느 정도 중요하다고 생각하십니까?",
+            nonHr: "범죄자들의 재범률이 줄어들 것이다.",
+            hr: "범죄의 재발가능성을 염두에 둔 구금은 더 큰 사회문제를 일으킬 것이다."
+          },
+          {
+            type: "resp",
+            label: "Ⅲ. [책임 지각]",
+            prompt: "만약 당신이 황판사라면 어떻게 하시겠습니까?",
+            nonHr: "김씨의 교화를 위해 보호감호 처분을 내린다.",
+            hr: "재범하지 않은 김씨에게 보호감호 처분을 내리지 않는다."
+          }
+        ]
+      }
+    ];
+
+    // State Variables
+    let currentEpIdx = 0;
+    // answers[epId][qIdx] = { nonHr: 1..5, hr: 1..5 }
+    const answers = Array.from({ length: 10 }, () => [
+      { nonHr: null, hr: null },
+      { nonHr: null, hr: null },
+      { nonHr: null, hr: null }
+    ]);
+
+    const likertLabels = ["전혀<br>중요하지 않다", "별로<br>중요하지 않다", "보통이다", "대체로<br>중요하다", "매우<br>중요하다"];
+
+    // DOM Elements
+    const screenIntro = document.getElementById("screenIntro");
+    const screenTest = document.getElementById("screenTest");
+    const screenResult = document.getElementById("screenResult");
+
+    const progressBar = document.getElementById("progressBar");
+    const progressText = document.getElementById("progressText");
+
+    const btnStart = document.getElementById("btnStart");
+    const btnPrev = document.getElementById("btnPrev");
+    const btnNext = document.getElementById("btnNext");
+    const btnRestart = document.getElementById("btnRestart");
+
+    const epNumber = document.getElementById("epNumber");
+    const epTitle = document.getElementById("epTitle");
+    const epTopic = document.getElementById("epTopic");
+    const epStory = document.getElementById("epStory");
+    const epQuestions = document.getElementById("epQuestions");
+
+    // Start App
+    btnStart.addEventListener("click", () => {
+      screenIntro.classList.add("hidden");
+      screenTest.classList.remove("hidden");
+      renderEpisode(0);
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    });
+
+    // Render an Episode
+    function renderEpisode(index) {
+      currentEpIdx = index;
+      const ep = episodes[index];
+
+      // Update Header & Progress
+      epNumber.textContent = `에피소드 ${index + 1} / 10`;
+      epTitle.textContent = ep.title;
+      epTopic.textContent = ep.topic;
+      epStory.textContent = ep.story;
+
+      const progressPercent = Math.round(((index) / 10) * 100);
+      progressBar.style.width = `${progressPercent}%`;
+      progressText.textContent = `진행률 ${progressPercent}%`;
+
+      // Previous button visibility
+      if (index === 0) {
+        btnPrev.classList.add("invisible");
+      } else {
+        btnPrev.classList.remove("invisible");
+      }
+
+      // Next button text
+      btnNext.textContent = (index === 9) ? "제출 및 결과 보기" : "다음 에피소드 →";
+
+      // Render Questions
+      epQuestions.innerHTML = "";
+      ep.questions.forEach((q, qIdx) => {
+        const qContainer = document.createElement("div");
+        qContainer.className = "border-t border-slate-100 pt-6 space-y-4";
+
+        const titleDiv = document.createElement("div");
+        titleDiv.innerHTML = `
+          <h4 class="font-bold text-slate-800 text-sm">${q.label}</h4>
+          <p class="text-xs text-slate-500 mt-0.5">${q.prompt}</p>
+        `;
+        qContainer.appendChild(titleDiv);
+
+        // 1. Non-HR Sub-Item
+        const nonHrBox = createRatingItem(index, qIdx, "nonHr", `1. ${q.nonHr}`);
+        qContainer.appendChild(nonHrBox);
+
+        // 2. HR Sub-Item
+        const hrBox = createRatingItem(index, qIdx, "hr", `2. ${q.hr}`);
+        qContainer.appendChild(hrBox);
+
+        epQuestions.appendChild(qContainer);
+      });
+    }
+
+    // Helper: Create 5-point Likert Option Row
+    function createRatingItem(epIdx, qIdx, type, labelText) {
+      const wrapper = document.createElement("div");
+      wrapper.className = "bg-slate-50/70 p-3.5 rounded-xl border border-slate-200/70 space-y-2";
+
+      const title = document.createElement("p");
+      title.className = "text-xs md:text-sm font-medium text-slate-800";
+      title.textContent = labelText;
+      wrapper.appendChild(title);
+
+      const radioGrid = document.createElement("div");
+      radioGrid.className = "grid grid-cols-5 gap-1 md:gap-2 pt-1";
+
+      const currentValue = answers[epIdx][qIdx][type];
+
+      for (let score = 1; score <= 5; score++) {
+        const label = document.createElement("label");
+        label.className = `flex flex-col items-center justify-between p-2 rounded-lg border text-center cursor-pointer transition text-xs select-none ${
+          currentValue === score 
+            ? "bg-indigo-600 text-white border-indigo-600 font-bold shadow-sm" 
+            : "bg-white text-slate-600 border-slate-200 hover:border-slate-300"
+        }`;
+
+        const input = document.createElement("input");
+        input.type = "radio";
+        input.name = `ep${epIdx}_q${qIdx}_${type}`;
+        input.value = score;
+        input.className = "hidden";
+        if (currentValue === score) input.checked = true;
+
+        input.addEventListener("change", () => {
+          answers[epIdx][qIdx][type] = score;
+          renderEpisode(currentEpIdx); // re-render to update selected styles
+        });
+
+        const numText = document.createElement("span");
+        numText.className = "font-bold text-sm mb-1";
+        numText.textContent = score;
+
+        const descText = document.createElement("span");
+        descText.className = "text-[10px] leading-tight";
+        descText.innerHTML = likertLabels[score - 1];
+
+        label.appendChild(input);
+        label.appendChild(numText);
+        label.appendChild(descText);
+        radioGrid.appendChild(label);
+      }
+
+      wrapper.appendChild(radioGrid);
+      return wrapper;
+    }
+
+    // Validate if current episode is completely answered
+    function isCurrentEpComplete() {
+      const curAnswers = answers[currentEpIdx];
+      for (let i = 0; i < 3; i++) {
+        if (curAnswers[i].nonHr === null || curAnswers[i].hr === null) {
+          return false;
+        }
+      }
+      return true;
+    }
+
+    // Navigation Buttons Handler
+    btnPrev.addEventListener("click", () => {
+      if (currentEpIdx > 0) {
+        renderEpisode(currentEpIdx - 1);
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      }
+    });
+
+    btnNext.addEventListener("click", () => {
+      if (!isCurrentEpComplete()) {
+        alert("현재 에피소드의 모든 문항(각 2문항씩 총 6개)에 대해 중요도를 평정해 주세요.");
+        return;
+      }
+
+      if (currentEpIdx < 9) {
+        renderEpisode(currentEpIdx + 1);
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      } else {
+        // Complete -> Calculate Result
+        calculateAndShowResult();
+      }
+    });
+
+    // Scoring Algorithm & Result Calculation
+    function calculateAndShowResult() {
+      progressBar.style.width = `100%`;
+      progressText.textContent = `진행률 100%`;
+
+      let totalScore = 0;
+      let sitScore = 0;
+      let conScore = 0;
+      let respScore = 0;
+
+      const epScores = [];
+
+      episodes.forEach((ep, eIdx) => {
+        let epTotal = 0;
+        let epSit = 0;
+        let epCon = 0;
+        let epResp = 0;
+
+        ep.questions.forEach((q, qIdx) => {
+          const res = answers[eIdx][qIdx];
+          // Paper Rule: if HR rating > Non-HR rating, score = HR rating; else 0
+          const earned = (res.hr > res.nonHr) ? res.hr : 0;
+
+          if (q.type === "sit") {
+            epSit += earned;
+            sitScore += earned;
+          } else if (q.type === "con") {
+            epCon += earned;
+            conScore += earned;
+          } else if (q.type === "resp") {
+            epResp += earned;
+            respScore += earned;
+          }
+          epTotal += earned;
+        });
+
+        totalScore += epTotal;
+        epScores.push({ title: ep.title, topic: ep.topic, sit: epSit, con: epCon, resp: epResp, total: epTotal });
+      });
+
+      // Update Screen
+      document.getElementById("resTotalScore").innerHTML = `${totalScore} <span class="text-lg font-normal text-slate-500">/ 150</span>`;
+      document.getElementById("resSitScore").textContent = sitScore;
+      document.getElementById("resConScore").textContent = conScore;
+      document.getElementById("resRespScore").textContent = respScore;
+
+      // Paper Norm Comparison (Adult Sample Mean: 80.8, SD: 28.9 / College Sample Mean: 77.6)
+      let interpretation = "";
+      if (totalScore >= 105) {
+        interpretation = "🌟 평균에 비해 인권감수성이 매우 높은 상위 수준입니다. 다양한 사회적 가치 속에서도 인권 옹호 가치를 확고하게 지각하고 있습니다.";
+      } else if (totalScore >= 75) {
+        interpretation = "👍 대한민국 성인 평균 수준(평균 약 78~81점)의 인권감수성을 보이고 있습니다.";
+      } else {
+        interpretation = "💡 갈등 상황에서 효율성, 질서 등의 다른 사회적 가치에 비해 인권 가치를 우선적으로 해석하는 민감성 향상이 권장됩니다.";
+      }
+      document.getElementById("resInterpretation").textContent = interpretation;
+
+      // Render Table
+      const tableBody = document.getElementById("resTableBody");
+      tableBody.innerHTML = "";
+      epScores.forEach((row) => {
+        const tr = document.createElement("tr");
+        tr.className = "hover:bg-slate-50";
+        tr.innerHTML = `
+          <td class="p-3 font-medium text-slate-800">${row.title}</td>
+          <td class="p-3 text-slate-500">${row.topic}</td>
+          <td class="p-3 text-center text-slate-700">${row.sit}/5</td>
+          <td class="p-3 text-center text-slate-700">${row.con}/5</td>
+          <td class="p-3 text-center text-slate-700">${row.resp}/5</td>
+          <td class="p-3 text-right font-bold text-indigo-600">${row.total}점</td>
+        `;
+        tableBody.appendChild(tr);
+      });
+
+      // Render Radar Chart
+      renderChart(sitScore, conScore, respScore);
+
+      screenTest.classList.add("hidden");
+      screenResult.classList.remove("hidden");
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    // Chart.js Radar Render
+    let chartInstance = null;
+    function renderChart(sit, con, resp) {
+      const ctx = document.getElementById("radarChart").getContext("2d");
+      if (chartInstance) chartInstance.destroy();
+
+      chartInstance = new Chart(ctx, {
+        type: 'radar',
+        data: {
+          labels: ['상황 지각', '결과 지각', '책임 지각'],
+          datasets: [{
+            label: '나의 획득 점수 (50점 만점)',
+            data: [sit, con, resp],
+            fill: true,
+            backgroundColor: 'rgba(79, 70, 229, 0.2)',
+            borderColor: 'rgb(79, 70, 229)',
+            pointBackgroundColor: 'rgb(79, 70, 229)',
+            pointBorderColor: '#fff',
+            pointHoverBackgroundColor: '#fff',
+            pointHoverBorderColor: 'rgb(79, 70, 229)'
+          }]
+        },
+        options: {
+          responsive: true,
+          scales: {
+            r: {
+              angleLines: { color: '#e2e8f0' },
+              grid: { color: '#e2e8f0' },
+              suggestedMin: 0,
+              suggestedMax: 50,
+              ticks: { stepSize: 10, display: false }
+            }
+          },
+          plugins: {
+            legend: { display: false }
+          }
+        }
+      });
+    }
+
+    // Restart Button
+    btnRestart.addEventListener("click", () => {
+      // Reset Answers
+      for (let i = 0; i < 10; i++) {
+        for (let j = 0; j < 3; j++) {
+          answers[i][j] = { nonHr: null, hr: null };
+        }
+      }
+      screenResult.classList.add("hidden");
+      screenIntro.classList.remove("hidden");
+      progressBar.style.width = `0%`;
+      progressText.textContent = `진행률 0%`;
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    });
+  </script>
+</body>
+</html>
